@@ -54,3 +54,38 @@ void printGameState(GameState* game) {
     printBoard(&game->board);
     printf("===================\n");
 }
+
+// Dans game.c - Ajouter ces fonctions
+int canPlayerPlay(GameState* game, int playerIndex) {
+    Player* player = &game->players[playerIndex];
+    
+    if(game->phase == FIRST_MOVE) {
+        return canPlayFirstTurn(player);
+    }
+    
+    return 1;
+}
+
+void playerDrawTile(GameState* game, int playerIndex) {
+    if(game->tilesInDeck > 0) {
+        Tile tile = drawTile(&game->board);
+        addTileToHand(&game->players[playerIndex], tile);
+        game->tilesInDeck--;
+    }
+}
+
+int playerPlayCombination(GameState* game, int playerIndex, Combination combo) {
+    // Vérifier la validation
+    if(validateCombination(&combo)) {
+        // Pour V1, on accepte sans vérifier si le joueur a les tuiles
+        addCombinationToBoard(&game->board, combo);
+        
+        // Changer de phase si premier tour réussi
+        if(game->phase == FIRST_MOVE) {
+            game->phase = MAIN_GAME;
+        }
+        
+        return 1;
+    }
+    return 0;
+}

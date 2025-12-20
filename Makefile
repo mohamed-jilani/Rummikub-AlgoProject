@@ -19,6 +19,9 @@ SRC = $(SRC_DIR)/main.c \
       $(CORE_DIR)/board.c \
       $(CORE_DIR)/game.c \
       $(LOGIC_DIR)/validation.c \
+      $(LOGIC_DIR)/rules.c \
+      $(LOGIC_DIR)/scoring.c \
+      $(DATA_DIR)/file_manager.c \
       $(UTILS_DIR)/random.c \
       $(UTILS_DIR)/helpers.c
 
