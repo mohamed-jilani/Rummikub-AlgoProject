@@ -1,6 +1,8 @@
 // src/core/game.c
 #include <stdio.h>
 #include "game.h"
+#include "../logic/validation.h"
+#include "../logic/rules.h"
 
 void initGame(GameState* game, int playerCount, const char** names, int* isAI) {
     game->playerCount = playerCount;
@@ -75,6 +77,7 @@ void playerDrawTile(GameState* game, int playerIndex) {
 }
 
 int playerPlayCombination(GameState* game, int playerIndex, Combination combo) {
+    (void)playerIndex;  // Éviter l'avertissement unused parameter
     // Vérifier la validation
     if(validateCombination(&combo)) {
         // Pour V1, on accepte sans vérifier si le joueur a les tuiles

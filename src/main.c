@@ -9,6 +9,7 @@
 #include "logic/scoring.h"
 #include "utils/random.h"
 #include "utils/helpers.h"
+#include "graphics/simple_graphics.h"
 
 void testStructures() {
     printf("=== Test des structures ===\n");
@@ -292,10 +293,11 @@ int main() {
         printf("1. Tester les structures de base\n");
         printf("2. Démarrer une nouvelle partie\n");
         printf("3. Voir les règles du jeu\n");
-        printf("4. Sauvegarder/Charger (à venir)\n");
-        printf("5. Quitter\n");
+        printf("4. Interface graphique (démo)\n");
+        printf("5. Sauvegarder/Charger (à venir)\n");
+        printf("6. Quitter\n");
         
-        int choix = readInt("Votre choix: ", 1, 5);
+        int choix = readInt("Votre choix: ", 1, 6);
         
         switch(choix) {
             case 1:
@@ -318,9 +320,14 @@ int main() {
                 printf("  • Récupérer un joker\n");
                 break;
             case 4:
-                printf("\nFonctionnalité de sauvegarde à implémenter...\n");
+                printf("\nLancement de l'interface graphique...\n");
+                printf("Fermez la fenêtre pour revenir au menu.\n");
+                runMinimalGraphicalDemo();
                 break;
             case 5:
+                printf("\nFonctionnalité de sauvegarde à implémenter...\n");
+                break;
+            case 6:
                 printf("Au revoir!\n");
                 return 0;
         }
