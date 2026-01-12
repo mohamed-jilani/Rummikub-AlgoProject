@@ -1,6 +1,8 @@
 #include <stdio.h>
-#include <math.h>  // AJOUTER pour sin/cos
+#include <string.h>
+#include <math.h>
 #include "raylib.h"
+#include "../utils/helpers.h"
 
 // Structure pour une tuile simplifiée
 typedef struct {
@@ -416,4 +418,401 @@ void runMinimalGraphicalDemo() {
     }
     
     CloseWindow();
+}
+
+// ============================================
+// MENU GRAPHIQUE PRINCIPAL
+// ============================================
+
+// Structure pour un bouton
+typedef struct {
+    Rectangle rect;
+    char text[50];
+    Color normalColor;
+    Color hoverColor;
+    Color clickColor;
+    int isHovered;
+    int isClicked;
+} Button;
+
+// Créer un bouton
+Button createButton(int x, int y, int width, int height, const char* text) {
+    Button btn;
+    btn.rect = (Rectangle){x, y, width, height};
+    strncpy(btn.text, text, sizeof(btn.text)-1);
+    btn.normalColor = (Color){60, 100, 180, 255};
+    btn.hoverColor = (Color){80, 120, 200, 255};
+    btn.clickColor = (Color){40, 80, 160, 255};
+    btn.isHovered = 0;
+    btn.isClicked = 0;
+    return btn;
+}
+
+// Mettre à jour un bouton
+void updateButton(Button* btn) {
+    Vector2 mousePos = GetMousePosition();
+    btn->isHovered = CheckCollisionPointRec(mousePos, btn->rect);
+    
+    if (btn->isHovered && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        btn->isClicked = 1;
+    } else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+        btn->isClicked = 0;
+    }
+}
+
+// Dessiner un bouton avec effets améliorés
+void drawButton(Button btn) {
+    Color btnColor = btn.normalColor;
+    float scale = 1.0f;
+    
+    if (btn.isClicked) {
+        btnColor = btn.clickColor;
+        scale = 0.95f;
+    } else if (btn.isHovered) {
+        btnColor = btn.hoverColor;
+        scale = 1.05f;
+    }
+    
+    // Effet d'ombre si survolé
+    if (btn.isHovered || btn.isClicked) {
+        DrawRectangleRounded((Rectangle){btn.rect.x + 3, btn.rect.y + 3, 
+                                          btn.rect.width, btn.rect.height}, 
+                             0.3, 10, (Color){0, 0, 0, 100});
+    }
+    
+    // Rectangle principal avec effet de scale
+    Rectangle scaledRect = {
+        btn.rect.x + (btn.rect.width * (1 - scale)) / 2,
+        btn.rect.y + (btn.rect.height * (1 - scale)) / 2,
+        btn.rect.width * scale,
+        btn.rect.height * scale
+    };
+    
+    DrawRectangleRounded(scaledRect, 0.3, 10, btnColor);
+    
+    // Bordure avec effet de brillance
+    Color borderColor = btn.isHovered ? (Color){255, 255, 255, 200} : WHITE;
+    for (int i = 0; i < 2; i++) {
+        Rectangle borderRect = {
+            scaledRect.x - i, scaledRect.y - i, 
+            scaledRect.width + 2*i, scaledRect.height + 2*i
+        };
+        DrawRectangleRoundedLines(borderRect, 0.3, 10, borderColor);
+    }
+    
+    // Effet de brillance en haut du bouton
+    if (btn.isHovered) {
+        DrawRectangleGradientV(scaledRect.x, scaledRect.y, 
+                              scaledRect.width, scaledRect.height / 3,
+                              (Color){255, 255, 255, 30}, 
+                              (Color){255, 255, 255, 0});
+    }
+    
+    // Centrer le texte
+    int fontSize = 22;
+    int textWidth = MeasureText(btn.text, fontSize);
+    int textX = btn.rect.x + (btn.rect.width - textWidth) / 2;
+    int textY = btn.rect.y + (btn.rect.height - fontSize) / 2;
+    
+    // Ombre du texte
+    DrawText(btn.text, textX + 1, textY + 1, fontSize, (Color){0, 0, 0, 100});
+    DrawText(btn.text, textX, textY, fontSize, WHITE);
+}
+
+// Afficher les règles dans une fenêtre graphique
+void showRulesWindow() {
+    const int screenWidth = 900;
+    const int screenHeight = 700;
+    
+    InitWindow(screenWidth, screenHeight, "Rummikub - Regles du Jeu");
+    SetTargetFPS(60);
+    
+    float scrollOffset = 0;
+    float animationTime = 0;
+    
+    while (!WindowShouldClose() && !IsKeyPressed(KEY_ESCAPE)) {
+        animationTime += GetFrameTime();
+        
+        // Gestion du scroll avec la molette
+        scrollOffset -= GetMouseWheelMove() * 20;
+        if (scrollOffset < 0) scrollOffset = 0;
+        if (scrollOffset > 400) scrollOffset = 400;
+        
+        BeginDrawing();
+        
+        // Fond avec dégradé
+        DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
+                              (Color){20, 20, 40, 255},
+                              (Color){10, 10, 25, 255});
+        
+        // En-tête
+        DrawRectangle(0, 0, screenWidth, 80, (Color){30, 30, 60, 255});
+        DrawText("REGLES DU RUMMIKUB", 200, 20, 50, (Color){220, 180, 60, 255});
+        DrawText("Appuyez sur ECHAP pour fermer", 250, 60, 18, LIGHTGRAY);
+        
+        // Contenu scrollable
+        int yPos = 100 - (int)scrollOffset;
+        
+        // But du jeu
+        DrawText("BUT DU JEU", 50, yPos, 32, (Color){220, 180, 60, 255});
+        yPos += 50;
+        DrawText("Etre le premier joueur a poser toutes ses tuiles sur le plateau.", 
+                 70, yPos, 20, WHITE);
+        yPos += 40;
+        
+        // Combinaisons valides
+        DrawText("COMBINAISONS VALIDES", 50, yPos, 32, (Color){180, 220, 180, 255});
+        yPos += 50;
+        
+        DrawText("1. SERIE (Groupe)", 70, yPos, 24, (Color){200, 200, 255, 255});
+        yPos += 35;
+        DrawText("   - 3 ou 4 tuiles de meme valeur", 90, yPos, 18, LIGHTGRAY);
+        yPos += 25;
+        DrawText("   - Couleurs differentes (obligatoire)", 90, yPos, 18, LIGHTGRAY);
+        yPos += 25;
+        DrawText("   Exemple: 7 ROUGE, 7 BLEU, 7 JAUNE", 90, yPos, 18, (Color){150, 200, 150, 255});
+        yPos += 50;
+        
+        DrawText("2. SUITE (Sequence)", 70, yPos, 24, (Color){200, 200, 255, 255});
+        yPos += 35;
+        DrawText("   - Minimum 3 tuiles consecutives", 90, yPos, 18, LIGHTGRAY);
+        yPos += 25;
+        DrawText("   - Meme couleur (obligatoire)", 90, yPos, 18, LIGHTGRAY);
+        yPos += 25;
+        DrawText("   Exemple: 1 ROUGE, 2 ROUGE, 3 ROUGE", 90, yPos, 18, (Color){150, 200, 150, 255});
+        yPos += 50;
+        
+        // Premier tour
+        DrawText("PREMIER TOUR", 50, yPos, 32, (Color){255, 180, 100, 255});
+        yPos += 50;
+        DrawText("Pour pouvoir poser des tuiles lors du premier tour,", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("vous devez poser des combinaisons valides d'une valeur", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("minimum de 30 points.", 70, yPos, 20, WHITE);
+        yPos += 50;
+        
+        // Joker
+        DrawText("LE JOKER", 50, yPos, 32, (Color){200, 100, 100, 255});
+        yPos += 50;
+        DrawText("Le joker peut remplacer n'importe quelle tuile.", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("Si vous gardez un joker dans votre main a la fin", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("de la partie, il compte pour 30 points negatifs.", 70, yPos, 20, WHITE);
+        yPos += 50;
+        
+        // Actions
+        DrawText("ACTIONS POSSIBLES", 50, yPos, 32, (Color){180, 180, 255, 255});
+        yPos += 50;
+        DrawText("• Piocher une tuile du sac", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("• Poser des combinaisons valides sur le plateau", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("• Modifier des combinaisons existantes", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("• Remplacer un joker par la tuile qu'il represente", 70, yPos, 20, WHITE);
+        yPos += 50;
+        
+        // Fin de partie
+        DrawText("FIN DE PARTIE", 50, yPos, 32, (Color){255, 220, 100, 255});
+        yPos += 50;
+        DrawText("La partie se termine lorsqu'un joueur pose toutes ses tuiles.", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("Les autres joueurs comptent les points de leurs tuiles restantes.", 70, yPos, 20, WHITE);
+        yPos += 30;
+        DrawText("Le joueur avec le moins de points gagne la manche.", 70, yPos, 20, WHITE);
+        
+        // Indicateur de scroll
+        if (scrollOffset > 0) {
+            DrawTriangle((Vector2){screenWidth - 30, 100},
+                         (Vector2){screenWidth - 20, 90},
+                         (Vector2){screenWidth - 10, 100},
+                         YELLOW);
+        }
+        if (scrollOffset < 400) {
+            DrawTriangle((Vector2){screenWidth - 30, screenHeight - 100},
+                         (Vector2){screenWidth - 20, screenHeight - 90},
+                         (Vector2){screenWidth - 10, screenHeight - 100},
+                         YELLOW);
+        }
+        
+        EndDrawing();
+    }
+    
+    CloseWindow();
+}
+
+// Menu principal graphique amélioré
+void showGraphicalMenu() {
+    const int screenWidth = 1200;
+    const int screenHeight = 800;
+    
+    InitWindow(screenWidth, screenHeight, "Rummikub - Menu Principal");
+    SetTargetFPS(60);
+    
+    // Créer les boutons avec meilleur espacement
+    Button buttons[5];
+    int buttonStartY = 250;
+    int buttonSpacing = 90;
+    int buttonWidth = 400;
+    int buttonHeight = 70;
+    int buttonX = (screenWidth - buttonWidth) / 2;
+    
+    buttons[0] = createButton(buttonX, buttonStartY, buttonWidth, buttonHeight, "Nouvelle Partie");
+    buttons[1] = createButton(buttonX, buttonStartY + buttonSpacing, buttonWidth, buttonHeight, "Charger Partie");
+    buttons[2] = createButton(buttonX, buttonStartY + buttonSpacing * 2, buttonWidth, buttonHeight, "Scores");
+    buttons[3] = createButton(buttonX, buttonStartY + buttonSpacing * 3, buttonWidth, buttonHeight, "Regles");
+    buttons[4] = createButton(buttonX, buttonStartY + buttonSpacing * 4, buttonWidth, buttonHeight, "Quitter");
+    
+    // Améliorer les couleurs des boutons
+    buttons[0].normalColor = (Color){80, 150, 80, 255};   // Vert pour nouvelle partie
+    buttons[0].hoverColor = (Color){100, 180, 100, 255};
+    buttons[1].normalColor = (Color){100, 120, 200, 255}; // Bleu pour charger
+    buttons[1].hoverColor = (Color){120, 140, 220, 255};
+    buttons[2].normalColor = (Color){200, 150, 80, 255};  // Orange pour scores
+    buttons[2].hoverColor = (Color){220, 170, 100, 255};
+    buttons[3].normalColor = (Color){180, 100, 180, 255}; // Violet pour règles
+    buttons[3].hoverColor = (Color){200, 120, 200, 255};
+    buttons[4].normalColor = (Color){180, 60, 60, 255};   // Rouge pour quitter
+    buttons[4].hoverColor = (Color){200, 80, 80, 255};
+    
+    int selectedOption = -1;
+    float animationTime = 0;
+    
+    while (!WindowShouldClose() && selectedOption == -1) {
+        animationTime += GetFrameTime();
+        
+        // Mettre à jour les boutons
+        for (int i = 0; i < 5; i++) {
+            updateButton(&buttons[i]);
+            
+            if (buttons[i].isHovered && IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+                selectedOption = i;
+            }
+        }
+        
+        // Touches clavier
+        if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_KP_1)) selectedOption = 0;
+        if (IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_KP_2)) selectedOption = 1;
+        if (IsKeyPressed(KEY_THREE) || IsKeyPressed(KEY_KP_3)) selectedOption = 2;
+        if (IsKeyPressed(KEY_FOUR) || IsKeyPressed(KEY_KP_4)) selectedOption = 3;
+        if (IsKeyPressed(KEY_FIVE) || IsKeyPressed(KEY_KP_5) || IsKeyPressed(KEY_ESCAPE)) selectedOption = 4;
+        
+        // ===== DESSIN =====
+        BeginDrawing();
+        
+        // Fond avec dégradé amélioré
+        DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
+                              (Color){25, 25, 50, 255},
+                              (Color){15, 15, 35, 255});
+        
+        // Motif décoratif en arrière-plan
+        for (int i = 0; i < 50; i++) {
+            float time = animationTime + i * 0.2f;
+            int x = (int)(sin(time) * 150 + (i % 10) * 120);
+            int y = (int)(cos(time * 0.8f) * 80 + (i / 10) * 100);
+            float size = 1.5f + sin(time * 3 + i) * 0.8f;
+            float alpha = 20 + sin(time * 2) * 15;
+            DrawCircle(x, y, size, (Color){255, 255, 255, (unsigned char)alpha});
+        }
+        
+        // En-tête avec effet de brillance
+        DrawRectangle(0, 0, screenWidth, 120, (Color){20, 20, 40, 200});
+        DrawRectangleGradientV(0, 0, screenWidth, 120,
+                              (Color){30, 30, 60, 255},
+                              (Color){20, 20, 40, 255});
+        
+        // Ligne décorative animée sous l'en-tête
+        float pulse = sin(animationTime * 2) * 0.3f + 0.7f;
+        DrawRectangle(0, 120, screenWidth, 3, (Color){220, 180, 60, (unsigned char)(200 * pulse)});
+        
+        // Titre avec effet de pulsation amélioré
+        float titlePulse = sin(animationTime * 2.5f) * 0.08f + 0.92f;
+        int titleSize = (int)(75 * titlePulse);
+        int titleX = (screenWidth - MeasureText("RUMMIKUB", titleSize)) / 2;
+        
+        // Ombre du titre
+        DrawText("RUMMIKUB", titleX + 3, 23, titleSize, (Color){0, 0, 0, 150});
+        // Titre principal
+        DrawText("RUMMIKUB", titleX, 20, titleSize, (Color){220, 180, 60, 255});
+        
+        // Effet de brillance sur le titre (dégradé horizontal)
+        DrawRectangleGradientH(titleX, 20, MeasureText("RUMMIKUB", titleSize), titleSize,
+                               (Color){255, 255, 255, 0},
+                               (Color){255, 255, 255, 30});
+        
+        // Sous-titre centré
+        int subtitleX = (screenWidth - MeasureText("Projet Algorithmique - ISTY IATIC3", 22)) / 2;
+        DrawText("Projet Algorithmique - ISTY IATIC3", subtitleX, 75, 22, (Color){180, 180, 220, 255});
+        
+        // Dessiner les boutons
+        for (int i = 0; i < 5; i++) {
+            drawButton(buttons[i]);
+        }
+        
+        // Instructions améliorées
+        int instructionY = screenHeight - 80;
+        DrawRectangle(0, instructionY, screenWidth, 80, (Color){15, 15, 30, 200});
+        DrawText("Utilisez la souris ou les touches 1-5 pour selectionner", 
+                 (screenWidth - MeasureText("Utilisez la souris ou les touches 1-5 pour selectionner", 18)) / 2,
+                 instructionY + 15, 18, LIGHTGRAY);
+        
+        // Afficher les raccourcis clavier à côté des boutons avec style amélioré
+        const char* shortcuts[] = {"[1]", "[2]", "[3]", "[4]", "[5/ECHAP]"};
+        for (int i = 0; i < 5; i++) {
+            int shortcutX = buttonX - 80;
+            int shortcutY = buttonStartY + i * buttonSpacing + (buttonHeight - 16) / 2;
+            
+            // Fond du raccourci
+            DrawRectangleRounded((Rectangle){shortcutX - 5, shortcutY - 2, 50, 20}, 
+                                 0.2, 5, (Color){40, 40, 60, 200});
+            DrawText(shortcuts[i], shortcutX, shortcutY, 16, YELLOW);
+        }
+        
+        // Version et informations
+        DrawText("Version 1.0 - Decembre 2025", 20, screenHeight - 30, 16, (Color){150, 150, 200, 255});
+        
+        // FPS en haut à droite
+        DrawText(TextFormat("FPS: %d", GetFPS()), screenWidth - 100, 10, 18, GREEN);
+        
+        EndDrawing();
+    }
+    
+    CloseWindow();
+    
+    // Gérer la sélection
+    if (selectedOption != -1) {
+        printf("\n═══════════════════════════════════════\n");
+        printf("SELECTION DU MENU GRAPHIQUE\n");
+        printf("═══════════════════════════════════════\n");
+        
+        switch (selectedOption) {
+            case 0: // Nouvelle partie
+                printf("Option: Nouvelle Partie\n");
+                printf("Lancement de la demonstration graphique...\n");
+                runImprovedGraphicalDemo();
+                break;
+            case 1: // Charger
+                printf("Option: Charger Partie\n");
+                printf("Fonctionnalite a venir dans la version finale\n");
+                break;
+            case 2: // Scores
+                printf("Option: Scores\n");
+                printf("Meilleurs scores en cours de developpement\n");
+                break;
+            case 3: // Règles - Afficher dans une fenêtre graphique
+                printf("Option: Regles\n");
+                printf("Ouverture de la fenetre des regles...\n");
+                showRulesWindow();
+                break;
+            case 4: // Quitter
+                printf("Option: Quitter\n");
+                printf("Retour au menu principal...\n");
+                break;
+        }
+        
+        printf("Appuyez sur Entree pour continuer...");
+        clearInputBuffer();
+    }
 }
