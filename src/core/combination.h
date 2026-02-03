@@ -4,7 +4,7 @@
 
 #include "tile.h"
 
-#define MAX_COMBINATION_SIZE 13
+#define MAX_COMBINATION_SIZE 20
 
 typedef struct {
     Tile tiles[MAX_COMBINATION_SIZE];

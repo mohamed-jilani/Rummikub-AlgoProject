@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "tile.h"
 
-Tile createTile(int value, Color color) {
+Tile createTile(int value, TileColor color) {
     Tile tile;
     tile.value = value;
     tile.color = color;
@@ -17,6 +17,12 @@ Tile createJoker() {
 int isTileValid(Tile tile) {
     if (tile.isJoker) return 1;
     return (tile.value >= 1 && tile.value <= 13);
+}
+
+int isTileEqual(Tile t1, Tile t2) {
+    if (t1.isJoker && t2.isJoker) return 1;
+    if (t1.isJoker != t2.isJoker) return 0;
+    return (t1.value == t2.value && t1.color == t2.color);
 }
 
 void printTile(Tile tile) {

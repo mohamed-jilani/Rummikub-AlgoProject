@@ -3,12 +3,14 @@
 #include <string.h>
 #include "player.h"
 
-void initPlayer(Player* player, const char* name, int isAI) {
+void initPlayer(Player* player, const char* name, bool isComputer, AILevel level) {
     strncpy(player->name, name, MAX_NAME-1);
     player->name[MAX_NAME-1] = '\0';
     player->tileCount = 0;
     player->score = 0;
-    player->isAI = isAI;
+    player->isComputer = isComputer;
+    player->aiLevel = level;
+    player->hasMadeInitialMeld = 0;
     
     for(int i = 0; i < MAX_TILES; i++) {
         player->hand[i] = createTile(-1, NO_COLOR); // Main vide

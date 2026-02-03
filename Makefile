@@ -25,8 +25,16 @@ SRC = $(SRC_DIR)/main.c \
       $(DATA_DIR)/file_manager.c \
       $(GRAPHICS_DIR)/graphics.c \
       $(GRAPHICS_DIR)/simple_graphics.c \
+      $(GRAPHICS_DIR)/raylib_renderer.c \
+      $(GRAPHICS_DIR)/raylib_game.c \
+      $(GRAPHICS_DIR)/ui_components.c \
+      $(GRAPHICS_DIR)/main_menu.c \
+      $(DATA_DIR)/players_manager.c \
+      $(DATA_DIR)/scores_manager.c \
+      $(DATA_DIR)/save_manager.c \
       $(UTILS_DIR)/random.c \
-      $(UTILS_DIR)/helpers.c
+      $(UTILS_DIR)/helpers.c \
+      $(IA_DIR)/ai.c
 
 # Fichiers objets
 OBJ = $(SRC:.c=.o)
@@ -53,6 +61,19 @@ run: all
 # Compiler le test simple de l'interface graphique
 test_simple: test_simple.c
 	$(CC) $(CFLAGS) test_simple.c -o test_simple $(LDFLAGS)
+
+# Compiler le test de l'interface Raylib (sans main.o pour éviter le conflit)
+OBJ_NO_MAIN = $(filter-out src/main.o, $(OBJ))
+test_raylib: test_raylib.c $(OBJ_NO_MAIN)
+	$(CC) $(CFLAGS) test_raylib.c -o test_raylib $(OBJ_NO_MAIN) $(LDFLAGS)
+
+# Compiler le test des nouvelles fonctions graphiques
+test_new_functions: test_new_functions.c $(OBJ_NO_MAIN)
+	$(CC) $(CFLAGS) test_new_functions.c -o test_new_functions $(OBJ_NO_MAIN) $(LDFLAGS)
+
+# Compiler le test de validation
+test_validation: test_validation.c $(OBJ_NO_MAIN)
+	$(CC) $(CFLAGS) test_validation.c -o test_validation $(OBJ_NO_MAIN) $(LDFLAGS)
 
 # Créer la structure des dossiers
 init:
